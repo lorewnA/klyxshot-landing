@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Klyxshot — The Screenshot Tool That Thinks</title>
+<meta name="description" content="Capture, annotate, and understand your screen with AI. Free for everyone, Pro for power users." />
+
+<!-- Open Graph / Twitter -->
+<meta property="og:title" content="Klyxshot — The Screenshot Tool That Thinks" />
+<meta property="og:description" content="Capture screenshots, extract text with OCR, translate on the fly, and analyze with AI. Free for everyone." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://klyxshot.com" />
+
+<!-- Fonts: distinctive choice — JetBrains Mono for headers, Geist for body -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+:root {
+  --bg: #0a0e10;
+  --bg-elevated: #11171a;
+  --bg-card: #131a1e;
+  --border: #1f2a30;
+  --border-bright: #2a3a42;
+  --text: #e6f1f3;
+  --text-mute: #7a8a90;
+  --text-dim: #4a5a60;
+  --accent: #14B8A6;
+  --accent-bright: #2dd4bf;
+  --accent-dim: #0d6e64;
+  --accent-glow: rgba(20, 184, 166, 0.15);
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Instrument Serif', serif;
+  --sans: 'Inter', -apple-system, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(20, 184, 166, 0.18), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 30%, rgba(20, 184, 166, 0.06), transparent);
+}
+
+/* Subtle grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+
+.container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============== HEADER ============== */
+header {
+  position: sticky;
+  top: 0;
+  background: rgba(10, 14, 16, 0.78);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #001;
+  font-weight: 800;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.nav-links {
+  display: flex;
+  gap: 32px;
+  font-size: 14px;
+  color: var(--text-mute);
+}
+.nav-links a {
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #001;
+  box-shadow: 0 0 0 1px var(--accent-bright), 0 4px 16px var(--accent-glow);
+}
+.btn-primary:hover {
+  background: var(--accent-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--accent-bright), 0 8px 24px var(--accent-glow);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-bright);
+}
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent-bright);
+}
+
+/* ============== HERO ============== */
+.hero {
+  padding: 100px 0 80px;
+  text-align: center;
+  position: relative;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--accent-bright);
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--accent-bright);
+  border-radius: 50%;
+  animation: pulse 1.8s infinite;
+  box-shadow: 0 0 8px var(--accent-bright);
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.hero h1 {
+  font-family: var(--sans);
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin-bottom: 24px;
+  background: linear-gradient(180deg, #fff 0%, #a8b6bc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero h1 em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  background: linear-gradient(180deg, var(--accent-bright) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding: 0 4px;
+}
+.hero p.subtitle {
+  font-size: 19px;
+  color: var(--text-mute);
+  max-width: 620px;
+  margin: 0 auto 40px;
+  line-height: 1.55;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.btn-large {
+  padding: 14px 24px;
+  font-size: 15px;
+}
+.hero-meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* ============== HERO SCREENSHOT ============== */
+.hero-shot {
+  margin-top: 64px;
+  position: relative;
+}
+.hero-shot-frame {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(20, 184, 166, 0.1),
+    0 0 100px rgba(20, 184, 166, 0.08);
+  max-width: 1000px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 10;
+}
+.hero-shot-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.hero-shot-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+}
+.hero-shot-dot.red { background: #ff5f56; }
+.hero-shot-dot.yellow { background: #ffbd2e; }
+.hero-shot-dot.green { background: #27c93f; }
+.hero-shot-content {
+  position: relative;
+  height: calc(100% - 41px);
+  background:
+    linear-gradient(135deg, #1a2226 0%, #0d1416 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ASCII-art / simulated screenshot */
+.demo-snippet {
+  position: relative;
+  width: 90%;
+  max-width: 720px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b6c9d0;
+  padding: 32px;
+}
+.demo-line {
+  display: block;
+  white-space: pre;
+}
+.demo-line .kw { color: #c084fc; }
+.demo-line .str { color: #86efac; }
+.demo-line .com { color: #6b7e85; }
+.demo-line .fn { color: #fbbf24; }
+
+/* Selection box overlay */
+.demo-selection {
+  position: absolute;
+  border: 2px solid var(--accent-bright);
+  border-radius: 4px;
+  background: rgba(20, 184, 166, 0.06);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  top: 18%;
+  left: 6%;
+  width: 60%;
+  height: 50%;
+  animation: selectPulse 3s ease-in-out infinite;
+}
+@keyframes selectPulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45), 0 0 0 0 rgba(20, 184, 166, 0); }
+  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45), 0 0 0 4px rgba(20, 184, 166, 0.2); }
+}
+
+/* Mini toolbar in screenshot */
+.demo-toolbar {
+  position: absolute;
+  bottom: 14%;
+  left: 6%;
+  display: flex;
+  gap: 4px;
+  background: rgba(20, 20, 28, 0.95);
+  padding: 5px;
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.demo-tool-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.demo-tool-btn.edit { background: #9C27B0; }
+.demo-tool-btn.pin { background: #14B8A6; }
+.demo-tool-btn.save { background: #4CAF50; }
+.demo-tool-btn.copy { background: #2196F3; }
+
+/* ============== SECTION ============== */
+section {
+  padding: 100px 0;
+  position: relative;
+}
+.section-eyebrow {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-left: 28px;
+  position: relative;
+}
+.section-eyebrow::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 20px;
+  height: 1px;
+  background: var(--accent);
+}
+.section-title {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+  max-width: 720px;
+}
+.section-title em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent-bright);
+}
+.section-subtitle {
+  font-size: 18px;
+  color: var(--text-mute);
+  max-width: 620px;
+  line-height: 1.55;
+  margin-bottom: 64px;
+}
+
+/* ============== FEATURES ============== */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.feature-card {
+  background: var(--bg-card);
+  padding: 32px;
+  transition: background 0.2s;
+}
+.feature-card:hover {
+  background: var(--bg-elevated);
+}
+.feature-icon {
+  width: 36px; height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.25);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+.feature-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.feature-card p {
+  font-size: 14px;
+  color: var(--text-mute);
+  line-height: 1.55;
+}
+.feature-card .pro-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-bright);
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+/* ============== AI SHOWCASE ============== */
+.ai-showcase {
+  background: linear-gradient(180deg, transparent, rgba(20, 184, 166, 0.04));
+  position: relative;
+}
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+.ai-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.ai-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.ai-card:hover {
+  border-color: var(--accent-dim);
+  transform: translateY(-4px);
+}
+.ai-card:hover::before { opacity: 1; }
+
+.ai-card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent-bright);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+.ai-card h3 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+.ai-card p {
+  font-size: 14px;
+  color: var(--text-mute);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.ai-demo-mini {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-mute);
+}
+.ai-demo-mini .arrow {
+  color: var(--accent);
+  display: inline-block;
+  margin: 6px 0;
+}
+.ai-demo-mini .input { color: var(--text-dim); }
+.ai-demo-mini .output { color: var(--accent-bright); }
+
+/* ============== PRICING ============== */
+.pricing {
+  background: var(--bg);
+  position: relative;
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 900px;
+  margin: 64px auto 0;
+}
+.price-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 36px;
+  position: relative;
+  transition: all 0.25s;
+}
+.price-card.pro {
+  border: 1px solid var(--accent-dim);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(20, 184, 166, 0.08), transparent),
+    var(--bg-card);
+}
+.price-card.pro::before {
+  content: 'POPULAR';
+  position: absolute;
+  top: -1px;
+  right: 24px;
+  background: var(--accent);
+  color: #001;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 0 0 6px 6px;
+}
+.price-card h3 {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.price-card .price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.price-card .price .amount {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.price-card .price .period {
+  font-size: 16px;
+  color: var(--text-mute);
+}
+.price-card .price-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+  font-family: var(--mono);
+}
+.price-card .price-cta {
+  width: 100%;
+  margin-bottom: 28px;
+  justify-content: center;
+}
+.price-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.price-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.price-card li .check {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  color: var(--accent-bright);
+  margin-top: 1px;
+}
+.price-card li.muted { color: var(--text-mute); }
+.price-card li.muted .check { color: var(--text-dim); }
+.price-card .annual-note {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--accent-bright);
+  font-weight: 600;
+  background: rgba(20, 184, 166, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+/* ============== FAQ ============== */
+.faq {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 0;
+}
+.faq-q {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  list-style: none;
+  padding: 4px 0;
+}
+.faq-q::-webkit-details-marker { display: none; }
+.faq-q::after {
+  content: '+';
+  font-family: var(--mono);
+  font-size: 22px;
+  color: var(--accent);
+  transition: transform 0.2s;
+  font-weight: 300;
+}
+details[open] .faq-q::after { transform: rotate(45deg); }
+.faq-a {
+  margin-top: 14px;
+  color: var(--text-mute);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* ============== CTA ============== */
+.bottom-cta {
+  text-align: center;
+  padding: 120px 0;
+  background:
+    radial-gradient(ellipse 60% 100% at 50% 50%, rgba(20, 184, 166, 0.12), transparent);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.bottom-cta h2 {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+.bottom-cta h2 em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent-bright);
+}
+.bottom-cta p {
+  color: var(--text-mute);
+  font-size: 18px;
+  margin-bottom: 36px;
+}
+
+/* ============== FOOTER ============== */
+footer {
+  padding: 48px 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer-links {
+  display: flex;
+  gap: 24px;
+}
+.footer-links a:hover { color: var(--text); }
+
+/* ============== RESPONSIVE ============== */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  section { padding: 64px 0; }
+  .hero { padding: 60px 0 40px; }
+}
+
+/* ============== ANIMATIONS ============== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero > * { animation: fadeUp 0.8s ease-out backwards; }
+.hero-badge { animation-delay: 0.05s; }
+.hero h1 { animation-delay: 0.15s; }
+.hero p.subtitle { animation-delay: 0.25s; }
+.hero-cta { animation-delay: 0.35s; }
+.hero-meta { animation-delay: 0.45s; }
+.hero-shot { animation-delay: 0.55s; animation: fadeUp 1s ease-out 0.55s backwards; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <nav class="nav">
+      <a href="/" class="logo">
+        <span class="logo-mark">K</span>
+        <span>klyxshot</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#ai">AI</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <a href="/download" class="btn btn-primary">Download Free</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============== HERO ============== -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span>Free for Windows · macOS soon</span>
+    </div>
+    <h1>The screenshot tool<br/>that <em>actually</em> thinks.</h1>
+    <p class="subtitle">
+      Capture, annotate, pin, and pull text or meaning out of any pixel on your screen.
+      All the basics free forever — AI superpowers when you need them.
+    </p>
+    <div class="hero-cta">
+      <a href="/download" class="btn btn-primary btn-large">
+        ↓ Download for Windows
+      </a>
+      <a href="#pricing" class="btn btn-ghost btn-large">See pricing →</a>
+    </div>
+    <div class="hero-meta">free · no signup · ~80MB · v1.1</div>
+
+    <div class="hero-shot">
+      <div class="hero-shot-frame">
+        <div class="hero-shot-titlebar">
+          <span class="hero-shot-dot red"></span>
+          <span class="hero-shot-dot yellow"></span>
+          <span class="hero-shot-dot green"></span>
+        </div>
+        <div class="hero-shot-content">
+          <div class="demo-snippet">
+            <span class="demo-line"><span class="com">// fetch user details</span></span>
+            <span class="demo-line"><span class="kw">async function</span> <span class="fn">getUser</span>(id) {</span>
+            <span class="demo-line">  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`/api/users/${id}`</span>)</span>
+            <span class="demo-line">  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'failed'</span>)</span>
+            <span class="demo-line">  <span class="kw">return</span> res.<span class="fn">json</span>()</span>
+            <span class="demo-line">}</span>
+            <span class="demo-line"></span>
+            <span class="demo-line"><span class="com">// hello, screenshot</span></span>
+          </div>
+          <div class="demo-selection"></div>
+          <div class="demo-toolbar">
+            <button class="demo-tool-btn edit">✏️ Edit</button>
+            <button class="demo-tool-btn pin">📌 Pin</button>
+            <button class="demo-tool-btn save">💾 Save</button>
+            <button class="demo-tool-btn copy">📋 Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== FEATURES ============== -->
+<section id="features">
+  <div class="container">
+    <span class="section-eyebrow">// Core</span>
+    <h2 class="section-title">Built for <em>speed</em>, designed for thought.</h2>
+    <p class="section-subtitle">
+      Every feature you'd expect — and a few you didn't know you needed. All free, forever.
+    </p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⌨️</div>
+        <h3>Global hotkey</h3>
+        <p>Hit <code>Ctrl+Shift+S</code> from anywhere. Instant capture overlay across all monitors.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>Multi-monitor</h3>
+        <p>Capture seamlessly across screen boundaries. Different DPIs handled correctly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✏️</div>
+        <h3>Built-in editor</h3>
+        <p>Arrows, text, blur, shapes, stickers, freehand. Everything you need to mark up a shot.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪝</div>
+        <h3>Pin to screen</h3>
+        <p>Keep a screenshot floating above any window. Adjust opacity with the scroll wheel.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✂️</div>
+        <h3>Lasso selection</h3>
+        <p>Right-click drag to draw any freeform shape. Background goes transparent automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🕘</div>
+        <h3>Quick history</h3>
+        <p>Last 20 screenshots one click away from the tray. Reopen, pin, or delete.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>OCR <span class="pro-badge">Pro</span></h3>
+        <p>Extract any text from any image — code, signs, handwritten notes, screenshots of locked PDFs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>AI analysis <span class="pro-badge">Pro</span></h3>
+        <p>Ask "what is this?" and get an answer. Explain code, identify objects, summarize charts.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌍</div>
+        <h3>Translate <span class="pro-badge">Pro</span></h3>
+        <p>Translate any text in a screenshot to any language. Foreign-language docs and UIs unlocked.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== AI SHOWCASE ============== -->
+<section id="ai" class="ai-showcase">
+  <div class="container">
+    <span class="section-eyebrow">// AI Pro features</span>
+    <h2 class="section-title">When a picture <em>isn't</em> enough.</h2>
+    <p class="section-subtitle">
+      Powered by Google Gemini. No API keys. No setup. Just press a button and get answers.
+    </p>
+
+    <div class="ai-grid">
+      <div class="ai-card">
+        <div class="ai-card-label">
+          <span>🔍</span>
+          <span>OCR / TEXT EXTRACTION</span>
+        </div>
+        <h3>Pull text from anything</h3>
+        <p>Code from a YouTube tutorial. Numbers from a chart. Text from a meme. One click → clipboard.</p>
+        <div class="ai-demo-mini">
+          <span class="input">→ screenshot of code</span>
+          <div class="arrow">⌄</div>
+          <span class="output">async function getUser(id) { ... }</span>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-card-label">
+          <span>🤖</span>
+          <span>AI ANALYSIS</span>
+        </div>
+        <h3>Ask anything about anything</h3>
+        <p>Explain this error. What does this regex do? Identify this plant. Summarize this dashboard.</p>
+        <div class="ai-demo-mini">
+          <span class="input">→ "what is this error?"</span>
+          <div class="arrow">⌄</div>
+          <span class="output">CORS policy blocks your fetch...</span>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-card-label">
+          <span>🌍</span>
+          <span>TRANSLATE</span>
+        </div>
+        <h3>Read any language, instantly</h3>
+        <p>Japanese game UI. German tax form. Russian news. Translates every word — no typing.</p>
+        <div class="ai-demo-mini">
+          <span class="input">→ 日本語のスクリーン</span>
+          <div class="arrow">⌄</div>
+          <span class="output">Japanese screen / settings menu</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== PRICING ============== -->
+<section id="pricing" class="pricing">
+  <div class="container">
+    <span class="section-eyebrow">// Pricing</span>
+    <h2 class="section-title">Simple. <em>Honest.</em></h2>
+    <p class="section-subtitle">
+      Free version is genuinely free — not crippled. Pro unlocks AI when you need it.
+    </p>
+
+    <div class="pricing-grid">
+      <!-- FREE -->
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="price">
+          <span class="amount">$0</span>
+          <span class="period">forever</span>
+        </div>
+        <div class="price-sub">no signup, no card</div>
+        <a href="/download" class="btn btn-ghost price-cta">↓ Download Free</a>
+        <ul>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>Region/window/fullscreen capture</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>Built-in editor (arrows, text, blur, shapes)</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>Pin to screen, freeform lasso</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>Multi-monitor, custom hotkeys</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>4 themes, history, save folder</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>Up to 10 custom stickers</li>
+          <li class="muted"><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M5 10a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1z"/></svg>No AI features</li>
+        </ul>
+      </div>
+
+      <!-- PRO -->
+      <div class="price-card pro">
+        <h3>Pro</h3>
+        <div class="price">
+          <span class="amount">$4.99</span>
+          <span class="period">/ month</span>
+        </div>
+        <div class="price-sub">
+          or $39/year <span class="annual-note">save 35%</span>
+        </div>
+        <a href="https://klyxshot.lemonsqueezy.com/checkout/buy/316e5a3e-97b0-4b9d-9ba4-1a4ab7ceb20b" target="_blank" class="btn btn-primary price-cta">→ Get Pro</a>
+        <ul>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg><strong>Everything in Free</strong></li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg><strong>OCR</strong> — extract text from any image</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg><strong>AI analysis</strong> — describe, explain, identify</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg><strong>Translate</strong> any language on screen</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg><strong>Unlimited custom stickers</strong></li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>500 OCR + 200 AI + 500 translate / mo</li>
+          <li><svg class="check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 0 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z"/></svg>Cancel anytime, instant activation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== FAQ ============== -->
+<section id="faq">
+  <div class="container">
+    <span class="section-eyebrow">// FAQ</span>
+    <h2 class="section-title">Questions, <em>answered</em>.</h2>
+
+    <div class="faq" style="margin-top: 48px;">
+      <details class="faq-item">
+        <summary class="faq-q">Is the free version really free, or crippled?</summary>
+        <div class="faq-a">Genuinely free. No watermarks, no signup, no time limits, no nag screens. The only difference is AI features (OCR, AI analysis, translate) — those run on our servers and cost real money per request, so they're Pro-only.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Why a subscription instead of a one-time payment?</summary>
+        <div class="faq-a">AI features (OCR, analysis, translation) cost us per request when you use them — we pay Google for every image processed. A subscription lets us keep delivering those without limits while keeping the price low.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Does Klyxshot send my screenshots anywhere?</summary>
+        <div class="faq-a">Free version: never. Everything stays on your machine. Pro version: only the screenshot you explicitly send to AI/OCR/Translate is uploaded to our servers, processed by Google Gemini, then immediately discarded. We don't store or train on your data.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Can I cancel my Pro subscription?</summary>
+        <div class="faq-a">Yes, anytime. Cancel from your Lemon Squeezy receipt email or by emailing support. You keep Pro features until the end of your billing period.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Is Klyxshot open source?</summary>
+        <div class="faq-a">The desktop client will be open-sourced on GitHub once we hit v1.5. The backend (license server, AI proxy) stays closed-source for security and economics.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">macOS / Linux versions?</summary>
+        <div class="faq-a">Coming. Windows is the first target — biggest market for screenshot tools. macOS port is planned for late 2026. Linux when there's demand.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What's the system requirement?</summary>
+        <div class="faq-a">Windows 10 or newer. ~80MB disk space. About 100MB RAM idle. Works fine on any machine made in the last 8 years.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============== BOTTOM CTA ============== -->
+<section class="bottom-cta">
+  <div class="container">
+    <h2>Capture more.<br/>Think <em>faster</em>.</h2>
+    <p>Free download. No signup. ~30 seconds to install.</p>
+    <a href="/download" class="btn btn-primary btn-large">↓ Download Klyxshot for Windows</a>
+  </div>
+</section>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="container">
+    <div class="footer-row">
+      <div class="logo">
+        <span class="logo-mark">K</span>
+        <span>klyxshot</span>
+        <span style="color: var(--text-dim); font-family: var(--mono); font-size: 11px; margin-left: 8px;">© 2026</span>
+      </div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="mailto:support@klyxshot.com">Support</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Smooth nav for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href')
+    if (href === '#') return
+    const el = document.querySelector(href)
+    if (el) {
+      e.preventDefault()
+      window.scrollTo({ top: el.offsetTop - 60, behavior: 'smooth' })
+    }
+  })
+})
+</script>
+
+</body>
+</html>
